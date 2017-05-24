@@ -1,5 +1,7 @@
 package starfish.orm.database;
 
+import starfish.orm.util.DateTools;
+
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
@@ -22,6 +24,8 @@ public class DataBaseInfo {
      * 数据库连接对象
      */
     private Connection conn = null;
+    private DatabaseMetaData meta = null;
+    private ResultSet rs = null;
 
     /**
      * 变量用于存储数据库表结构信息
@@ -57,11 +61,13 @@ public class DataBaseInfo {
             Class.forName(driver);
             conn = DriverManager.getConnection(url,name,passwd);
         } catch (ClassNotFoundException e) {
-            System.err.println("装载 JDBC/ODBC 驱动程序失败。");
+            System.err.println(DateTools.getTime() + "JDBC/ODBC driver load filed.");
             e.printStackTrace();
         } catch (SQLException sqle) {
-            System.err.println( "无法连接数据库" );
+            System.err.println(DateTools.getTime() + "Database connect error." );
             sqle.printStackTrace();
+        } finally {
+            System.out.println(DateTools.getTime() + "Database connect success.");
         }
     }
 
@@ -76,16 +82,28 @@ public class DataBaseInfo {
         List<String> tableNames = new ArrayList<String>();
 
         try {
-            DatabaseMetaData meta = conn.getMetaData();
-            ResultSet rs = meta.getTables(null, null, null, new String[] { "TABLE" });
+            meta = conn.getMetaData();
+            rs = meta.getTables(null, null, null, new String[] { "TABLE" });
 
             while (rs.next()) {
                 tableNames.add(rs.getString("TABLE_NAME"));
             }
-
         } catch (SQLException e) {
-            System.err.println( "执行数据库表明查询失败" );
+            System.err.println(DateTools.getTime() + "Select Table Name filed." );
             e.printStackTrace();
+        } finally {
+            if(meta != null) {
+                meta = null;
+            }
+            try {
+                if(rs != null) {
+                    rs.close();
+                    rs = null;
+                }
+            } catch(SQLException e) {
+                System.err.println(DateTools.getTime() + "Close object ResultSet filed.");
+                e.printStackTrace();
+            }
         }
 
         return tableNames;
@@ -102,20 +120,26 @@ public class DataBaseInfo {
         for(int i =0;i<tableNames.size();i++) {
             List<String> columns = new ArrayList<String>();
             try {
-                DatabaseMetaData meta = conn.getMetaData();
+                meta = conn.getMetaData();
                 ResultSet rs = meta.getColumns(null,"%", tableNames.get(i),"%");
                 while(rs.next()) {
                     columns.add(rs.getString("COLUMN_NAME"));
-                    /*
-                    columnName = colRet.getString("COLUMN_NAME");
-                    columnType = colRet.getString("TYPE_NAME");
-                    int datasize = colRet.getInt("COLUMN_SIZE");
-                    int digits = colRet.getInt("DECIMAL_DIGITS");
-                    int nullable = colRet.getInt("NULLABLE");
-                     */
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
+            } finally {
+                if(meta != null) {
+                    meta = null;
+                }
+                try {
+                    if(rs != null) {
+                        rs.close();
+                        rs = null;
+                    }
+                } catch(SQLException e) {
+                    System.err.println(DateTools.getTime()+"Close object ResultSet filed.");
+                    e.printStackTrace();
+                }
             }
 
             dbData.put(tableNames.get(i),columns);
@@ -126,7 +150,24 @@ public class DataBaseInfo {
     }
 
     public Map<String,List<String>> getDbInfo() {
+        disConnect();
         return this.dbData;
+    }
+
+
+    private void disConnect() {
+        try {
+            if(conn != null) {
+                conn.close();
+                conn = null;
+            }
+        } catch (SQLException e) {
+            System.out.println(DateTools.getTime() + "Database disconnect error.");
+            e.printStackTrace();
+        } finally {
+            System.out.println(DateTools.getTime() + "Datebase disconnect success.");
+
+        }
     }
 
 }

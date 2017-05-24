@@ -1,5 +1,6 @@
 package starfish.orm.database;
 
+import starfish.orm.util.DateTools;
 import starfish.orm.util.PropertiesHelp;
 
 import java.io.File;
@@ -51,9 +52,13 @@ public class ProducesClass {
                 File file=new File(path);
                 if(!file.exists()) {
                     file.createNewFile();
-                } else {
-                    System.err.println(turnFirstUp(key) +".java类文件已生成，退出执行！");
-                    return;
+                    System.out.println(DateTools.getTime() + "Package " + propertiesHelp.getPropertie("entrypath") + " build file " + turnFirstUp(key) +".java success.");
+                } else if(file.isFile()) {
+                    System.out.println(DateTools.getTime() + "Package " + propertiesHelp.getPropertie("entrypath") + " already exist " + turnFirstUp(key) +".java,delete and rebuild this file.");
+                    file.delete();
+//System.out.println(DateTools.getTime() + turnFirstUp(key) +".java类文件已删除成功");
+                    file.createNewFile();
+//System.out.println(DateTools.getTime() + turnFirstUp(key) +".java类新文件已创建");
                 }
                 FileOutputStream out=new FileOutputStream(file,true);
                 out.write(entityString.getBytes("utf-8"));
@@ -65,7 +70,7 @@ public class ProducesClass {
             classNames = classNames + turnFirstUp(key) + " ";
         }
 
-        System.err.println("包" + propertiesHelp.getPropertie("entrypath") + "下" + dbData.size() + "个类文件：" + classNames + "生成完毕！");
+//System.out.println(DateTools.getTime() + "包" + propertiesHelp.getPropertie("entrypath") + "下" + dbData.size() + "个类文件：" + classNames + "生成完毕！");
 
 
     }
@@ -78,11 +83,11 @@ public class ProducesClass {
      */
     public String producesClassContent(String tableName,List<String> columns) {
         StringBuilder stringBuilder=new StringBuilder();
-        stringBuilder.append("package "+propertiesHelp.getPropertie("entrypath")+";\r\n");
+        stringBuilder.append("package "+propertiesHelp.getPropertie("entrypath")+";\r\n\n");
         stringBuilder.append("/**\r\n");
         stringBuilder.append("* " + new Date() + "\r\n");
         stringBuilder.append("* StarFish ORM atuo generate: " + tableName + " \r\n");
-        stringBuilder.append("*/ \r\n");
+        stringBuilder.append("*/ \r\n\n");
         stringBuilder.append("public class " + turnFirstUp(tableName) + "{\r\n");
 
         for(String colName:columns){
